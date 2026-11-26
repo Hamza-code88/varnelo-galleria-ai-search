@@ -140,8 +140,22 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
               <span className="inline-flex px-3 py-1 rounded-md text-[12px] font-medium bg-[#E6F2EF] text-[#0F5C4C]">
                 In Stock (14 left)
               </span>
+              {!currentVariant.in_stock || currentVariant.stock_count === 0 ? (
+                <span className="inline-flex px-3 py-1 rounded-md text-[12px] font-medium bg-[#EFECE6] text-[#7A7F87]">
+                  Out of Stock
+                </span>
+              ) : currentVariant.stock_count <= 5 ? (
+                <span className="inline-flex px-3 py-1 rounded-md text-[12px] font-medium bg-[#FBECE6] text-[#D96B43]">
+                  Low Stock ({currentVariant.stock_count} left)
+                </span>
+              ) : (
+                <span className="inline-flex px-3 py-1 rounded-md text-[12px] font-medium bg-[#E6F2EF] text-[#0F5C4C]">
+                  In Stock ({currentVariant.stock_count} left)
+                </span>
+              )}
               <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-mono text-[#5C626D] bg-[#F4F2EE]">
                 SKU AUR-SNK-09
+                SKU {currentVariant.sku}
               </span>
             </div>
 

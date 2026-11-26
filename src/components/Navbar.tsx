@@ -14,6 +14,35 @@ interface NavbarProps {
   onSelectProduct: (p: ProductRecord) => void;
 }
 
+function getQueryBadgeText(query: string): string {
+  const trimmed = query.trim();
+  if (!trimmed) return 'Instant Search';
+
+  const replacements: Array<[RegExp, string]> = [
+    [/\bnikey\b/gi, 'Nike'],
+    [/\bshooes\b/gi, 'Shoes'],
+    [/\bruning\b/gi, 'Running'],
+    [/\bkicks\b/gi, 'Running Shoes'],
+    [/\bcoat\b/gi, 'Jacket'],
+    [/\btimepiece\b/gi, 'Watch'],
+  ];
+
+  let corrected = trimmed;
+  let changed = false;
+  for (const [pattern, replacement] of replacements) {
+    if (pattern.test(corrected)) {
+      corrected = corrected.replace(pattern, replacement);
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    return `Corrected → ${corrected}`;
+  }
+
+  return `"${trimmed}"`;
+}
+
 export const Navbar: React.FC<NavbarProps> = ({
   merchantMode,
   onToggleMerchantMode,
@@ -27,12 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const latencyMs = results?.processingTimeMS ?? 14;
-  const lowerQuery = (query || '').toLowerCase();
-  const isTypoOrSynonym =
-    lowerQuery.includes('nikey') ||
-    lowerQuery.includes('shooes') ||
-    lowerQuery.includes('runing') ||
-    lowerQuery.includes('kicks');
+  const badgeText = getQueryBadgeText(query || '');
 
   const handleSelectQuery = (q: string) => {
     refine(q);
@@ -40,6 +64,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleSelectProduct = (p: ProductRecord) => {
+    // Also filter/highlight by the selected product's title so the grid reflects it
+    refine(p.title);
     onSelectProduct(p);
     setIsSearchFocused(false);
   };
@@ -74,30 +100,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               value={query}
               onChange={(e) => refine(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
-              placeholder="Search kicks, wool trench, nikey runing shooes..."
-              className="w-full h-10 pl-10 pr-64 bg-white text-[#14181F] text-[13px] rounded-full border border-[#E5E2DC] focus:outline-none focus:border-[#0F5C4C] transition-all shadow-2xs"
+              placeholder="Search kicks, wool jacket, nikey runing shooes..."
+              className="w-full h-10 pl-10 pr-56 bg-white text-[#14181F] text-[13px] rounded-full border border-[#E5E2DC] focus:outline-none focus:border-[#0F5C4C] transition-all shadow-2xs"
             />
 
             {/* Clear Button */}
             {query && (
               <button
                 type="button"
-                onClick={() => refine('')}
-                className="absolute right-56 p-1 text-[#7A7F87] hover:text-[#14181F]"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  refine('');
+                }}
+                className="absolute right-48 p-1 text-[#7A7F87] hover:text-[#14181F] cursor-pointer"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
 
-            {/* Real-time Algolia Latency & Typo Corrected Pill */}
-            <div className="absolute right-1.5 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-normal bg-[#0F5C4C] text-white pointer-events-none">
-              <span>{latencyMs}ms</span>
-              <span className="opacity-75">•</span>
-              <span>
-                {isTypoOrSynonym
-                  ? 'Typo Corrected → Nike Running Shoes'
-                  : 'Instant Search'}
-              </span>
+            {/* Real-time Algolia Latency & Dynamic Query Badge */}
+            <div className="absolute right-1.5 max-w-[180px] truncate flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-normal bg-[#0F5C4C] text-white pointer-events-none">
+              <span className="shrink-0">{latencyMs}ms</span>
+              <span className="opacity-75 shrink-0">•</span>
+              <span className="truncate">{badgeText}</span>
             </div>
           </div>
 
@@ -119,12 +145,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               role="switch"
               aria-checked={merchantMode}
               onClick={onToggleMerchantMode}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${merchantMode ? 'bg-[#0F5C4C]' : 'bg-[#D1CCC4]'
-                }`}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                merchantMode ? 'bg-[#0F5C4C]' : 'bg-[#D1CCC4]'
+              }`}
             >
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${merchantMode ? 'translate-x-4' : 'translate-x-0'
-                  }`}
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
+                  merchantMode ? 'translate-x-4' : 'translate-x-0'
+                }`}
               />
             </button>
           </div>

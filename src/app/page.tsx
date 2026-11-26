@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { InstantSearch, Configure, useHits, useInstantSearch } from 'react-instantsearch';
+import { InstantSearch, Configure, useHits, useInstantSearch, useSearchBox } from 'react-instantsearch';
 import { searchClient, INDEX_NAME } from '@/lib/search-client';
 import { Navbar } from '@/components/Navbar';
 import { FilterSidebar } from '@/components/FilterSidebar';
@@ -14,6 +14,7 @@ import { ShoppingBag } from '@/components/icons';
 function StorefrontContent() {
   const { items: hits } = useHits<ProductRecord>();
   const { results } = useInstantSearch();
+  const { query, refine } = useSearchBox();
 
   const [merchantMode, setMerchantMode] = useState(false);
   const [bagItems, setBagItems] = useState<
@@ -57,9 +58,26 @@ function StorefrontContent() {
           <div className="flex-1 w-full">
             {/* Header: Results Count & Sort Dropdown */}
             <div className="flex items-center justify-between pb-5">
-              <span className="text-[14px] text-[#14181F] font-normal">
-                {totalHits} Results
-              </span>
+              <div className="flex items-center gap-2 text-[14px] text-[#14181F] font-normal">
+                <span>
+                  {totalHits} Results
+                  {query ? (
+                    <>
+                      {' '}
+                      for <span className="font-semibold text-[#0F5C4C]">&ldquo;{query}&rdquo;</span>
+                    </>
+                  ) : null}
+                </span>
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => refine('')}
+                    className="text-[12px] text-[#5C626D] hover:text-[#0F5C4C] underline ml-1 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center gap-1.5 text-[13px] text-[#14181F] cursor-pointer hover:text-[#0F5C4C]">
                 <span>Sort by: Featured</span>
